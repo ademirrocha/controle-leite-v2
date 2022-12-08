@@ -1,0 +1,52 @@
+version: "3.7"
+services:
+
+  # mysql 8.0
+  mydb:
+    # image name
+    image: mysql:8.0
+    # Password and user name of mysql
+    environment:
+        MYSQL_ROOT_PASSWORD: 'root'
+        MYSQL_USER: 'WERfgcvh34546'
+        MYSQL_PASS: 'WERfgcvh34546'
+    # Which port should be exposed
+    ports:
+        - 3306:3306
+    container_name: mydb
+    volumes:
+        # Save the data in named "Volumes" of Docker
+        - db-store:/var/lib/mysql
+        # Or use the local file
+        # - ./docker_db_data/mysql:/var/lib/mysql
+        # Where to save the mysql's log
+        - ./logs:/var/log/mysql:z
+        # Where to load the my.cnf
+        - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:z
+    # Which network this container belongs to.
+    networks:
+        - app_network
+
+  backend:
+    container_name: backend
+    restart: always
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    env_file: ./backend/.env
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    ports:
+      - 3333:3333
+    external_links:
+      - mydb
+    depends_on:
+      - mydb
+
+networks:
+    # Containers in same network can access each other by using its container name as host name
+    app_network:
+        driver: "bridge"
+
+volumes:
+  db-store:
